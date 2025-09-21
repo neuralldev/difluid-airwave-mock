@@ -16,18 +16,17 @@ from concurrent.futures import ProcessPoolExecutor
 #  [Characteristic]  0000aa01-0000-1000-8000-00805f9b34fb (Handle: 44): Vendor specific  ( ['read', 'notify', 'write'] )  , Value: bytearray(b'\xff')
 #    [Descriptor]  00002902-0000-1000-8000-00805f9b34fb (Handle: 46): Client Characteristic Configuration  Value:  bytearray(b'')
 
-
-# SN F21E15806A05002
-# V003
-#AIRWAVE_NAME= "AirWave 302291"
-#AIRWAVE_ADDRESS="B16C2CD6-ACBB-666B-3732-AEE9AD09B9EC"
+# test device
+# BD   98:88:e0:a6:51:6e
+# SN   F21E15806A05002
+# FW   V003
+# NAME AirWave 302291
 
 AIRWAVE_PREFIX= "AirWave " # all devices start with this name
 
 class AirwaveUUID(StrEnum):
     AIRWAVE_SERVICE_UUID = "000000e3-0000-1000-8000-00805f9b34fb" # service UUID to discover devices
-    AIRWAVE_DIALOG_UUID  = "0000aa01-0000-1000-8000-00805f9b34fb" # clear text channel
-
+    AIRWAVE_DIALOG_UUID  = "0000aa01-0000-1000-8000-00805f9b34fb" # clear text channel characteristic
 
 class AirwaveFanMode(IntEnum):
     STANDARD=0
@@ -60,8 +59,6 @@ class AirwaveState(IntEnum):
 
 class DiFluidProtocol:
     """
-    Classe pour gérer les échanges de données avec les appareils DiFluid
-    selon le protocole décrit dans la documentation officielle.
     https://github.com/DiFluid/difluid-sdk-demo/blob/master/docs/difluid-protocol.md
     """
     PREAMBLE = b'\xdf\xdf'
@@ -78,8 +75,7 @@ class DiFluidProtocol:
 
     def build_full_message(self, function: int, command: int, data: bytes = b'') -> bytes:
         """
-        Assemble un message complet selon le format DiFluid :
-        [PREAMBLE][function][command][length][data][checksum][SUFFIX]
+        [PREAMBLE][function][command][length][data][checksum]
         """
         length = len(data)
         payload = self.PREAMBLE + struct.pack('BBB', function, command, length) + data
@@ -89,7 +85,7 @@ class DiFluidProtocol:
 
     def parse_full_message(self, payload: bytes) -> dict:
         """
-        Décode un payload selon le format DiFluid :
+        Décode  payload 
         [function][command][length][data][checksum]
         """
         if len(payload) < 6 or not payload.startswith(self.PREAMBLE) :
@@ -119,9 +115,6 @@ class DiFluidProtocol:
         self.buffer = bytearray()
 
 class DiFluidDevice(DiFluidProtocol):
-    """
-    Classe pour dialoguer avec un appareil DiFluid AirWave selon protocolAirWave.md.
-    """
     def __init__(self):
         super().__init__()
         self.address = ''
@@ -304,13 +297,13 @@ async def main():
         print ('no airwave found')
         return
                             
-    print('reading model')
-    model = await airwaveClient.get_device_model()
+    #print('reading model')
+    #model = await airwaveClient.get_device_model()
     print('reading sn')
     sn = await airwaveClient.get_device_sn()
-    print('reading version')
-    version = await airwaveClient.get_firmware_version()
-    print(f"model={model} S/N={sn} firmware version={version}")
+    #print('reading version')
+    #version = await airwaveClient.get_firmware_version()
+    print(f"sn={sn}")
     print('read state')
     await airwaveClient.disconnect()
     print('disconnected')
