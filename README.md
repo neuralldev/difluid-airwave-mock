@@ -5,7 +5,7 @@ Summary
 A small simulation and example project to control an AirWave device (firmware V400) from a Bluetooth source using Python. Integrates (or can wrap) the official vendor API to facilitate prototyping and testing without the physical device.
 
 Version
-Mock version 1.0.1
+Mock Version 1.0.1
 
 Features
 
