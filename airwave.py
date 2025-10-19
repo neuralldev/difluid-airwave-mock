@@ -1,3 +1,10 @@
+# airwave.py
+# Python module to interact with DiFluid AirWave devices over Bluetooth Low Energy (BLE).
+# Implements scanning, connecting, sending commands, and receiving notifications.
+# Uses the bleak library for BLE communication.
+# (c) 2025 TiLau, general puublic open source license.
+# Note: This code is provided as-is without warranty. Use at your own risk.
+
 import asyncio
 import struct
 from bleak import BleakScanner, BleakClient
@@ -113,6 +120,7 @@ class DiFluidDevice(DiFluidProtocol):
         try:
             self.client = BleakClient(self.address)
             await self.client.connect()
+            await self.send_command(0x01,0x01,b"DIFLUIDMOCK") # send a name different than "OmniFlux" which disables auto/control mode (V500 firmware)
             print("Connected successfully.")
             return True
         except Exception as e:
@@ -134,7 +142,7 @@ class DiFluidDevice(DiFluidProtocol):
             loop = asyncio.get_running_loop()
             loop.call_soon_threadsafe(self.process_notification_data, data)
         except Exception as e:
-            print(f"Erreur dans le handler de notification: {e}")
+            print(f"Error in notification handler: {e}")
             
     def process_notification_data(self, data):
         # Cette fonction s'exécute dans la boucle d'événements principale
@@ -161,7 +169,7 @@ class DiFluidDevice(DiFluidProtocol):
         
         # On s'abonne une seule fois.
         await self.client.start_notify(self.info_uuid, self.notification_handler)
-        print("Abonné aux notifications. En attente de données...")
+        print("Subscribed to notifications. Waiting for data...")
 
     async def get_response(self, function: int, command: int, timeout: float = 5.0):
         # Vide la queue avant d'envoyer la commande pour éviter de récupérer une ancienne réponse
@@ -178,7 +186,7 @@ class DiFluidDevice(DiFluidProtocol):
                 if response['function'] == function and response['command'] == command:
                     return response
             except asyncio.TimeoutError:
-                print(f"Timeout: aucune réponse pour la commande {function}-{command}.")
+                print(f"Timeout: no answer to command {function}-{command}.")
                 return None
             
             # S'il y a des réponses non pertinentes, on continue à attendre
@@ -243,7 +251,7 @@ class DiFluidDevice(DiFluidProtocol):
                     'catalyst': round(catalyst,1)
                 }
             except struct.error as e:
-                print(f"Erreur de décompression: {e}")
+                print(f"Error {e}")
         return {
             'inlet': -1.0,
             'catalyst': -1.0
